@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -7,70 +7,77 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { fetchImages } from 'Api/Api';
 import { Wrapper } from './App.styled';
+import { GallerySkeleton } from 'GallerySkeleton/GallerySkeleton';
 
-export class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    page: 1,
-    totalHits: 0,
-    error: null,
-    isLoading: false,
-  };
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      const { query, page } = this.state;
-      this.setState({ isLoading: true });
+  useEffect(() => {
+    if (!query) {
+      return;
+    }
+
+    async function getImages() {
+      setIsLoading(true);
 
       try {
         const data = await fetchImages(query, page);
 
-        this.setState(prevState => ({
-          images: page === 1 ? data.hits : [...prevState.images, ...data.hits],
-          totalHits:
-            page === 1
-              ? data.totalHits - data.hits.length
-              : data.totalHits - [...prevState.images, ...data.hits].length,
-        }));
-        this.setState({ error: null });
+        setImages(prevImages =>
+          page === 1 ? data.hits : [...prevImages, ...data.hits]
+        );
+
+        setTotalHits(prevState =>
+          page === 1
+            ? data.totalHits - data.hits.length
+            : prevState - data.hits.length
+        );
+
+        setError(null);
       } catch {
-        this.setState({ error: 'error' });
-        this.notify();
+        setError('error');
+        notify();
+        console.log(error);
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
     }
-  }
+    getImages();
+  }, [error, page, query]);
 
-  getQuery = query => {
-    this.setState({ query, page: 1, images: [] });
+  const getQuery = query => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
   };
 
-  incrementPage = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const incrementPage = () => {
+    setPage(state => state + 1);
   };
 
-  notify = () => {
+  function notify() {
     toast.error('Sorry, an error occurred, please try again...', {
       position: toast.POSITION.TOP_RIGHT,
     });
-  };
-
-  render() {
-    const { images, isLoading, totalHits } = this.state;
-
-    return (
-      <Wrapper>
-        <Searchbar onSubmit={this.getQuery} />
-        <ImageGallery images={images} />
-        {!!totalHits &&
-          (!isLoading ? <Button onClick={this.incrementPage} /> : <Loader />)}
-        <ToastContainer />
-      </Wrapper>
-    );
   }
-}
+
+  return (
+    <Wrapper>
+      <Searchbar onSubmit={getQuery} />
+      {page === 1 && isLoading ? (
+        <GallerySkeleton />
+      ) : (
+        <ImageGallery images={images} />
+      )}
+      {!!totalHits &&
+        query &&
+        (!isLoading ? <Button onClick={incrementPage} /> : <Loader />)}
+      <ToastContainer />
+    </Wrapper>
+  );
+};

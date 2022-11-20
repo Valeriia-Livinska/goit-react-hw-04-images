@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { ImageItem } from './ImageGalleryItem.styled';
 import { Modal } from 'components/Modal/Modal';
-import { Component } from 'react';
+import { useState } from 'react';
 
 const ImageCard = styled.img`
   width: 100%;
@@ -15,29 +15,19 @@ const ImageCard = styled.img`
   }
 `;
 
-export class ImageGalleryItem extends Component {
-  state = {
-    showModal: false,
+export const ImageGalleryItem = ({ webformatURL, alt, largeImageURL }) => {
+  const [showModal, setShowModal] = useState(false);
+
+  const toggleModal = () => {
+    setShowModal(prevState => !prevState);
   };
 
-  toggleModal = () => {
-    this.setState(prevState => ({ showModal: !prevState.showModal }));
-  };
-
-  render() {
-    const { webformatURL, alt, largeImageURL } = this.props;
-
-    return (
-      <ImageItem>
-        <ImageCard src={webformatURL} alt={alt} onClick={this.toggleModal} />
-        {this.state.showModal && (
-          <Modal
-            modalImg={largeImageURL}
-            closeModal={this.toggleModal}
-            alt={alt}
-          />
-        )}
-      </ImageItem>
-    );
-  }
-}
+  return (
+    <ImageItem>
+      <ImageCard src={webformatURL} alt={alt} onClick={toggleModal} />
+      {showModal && (
+        <Modal modalImg={largeImageURL} closeModal={toggleModal} alt={alt} />
+      )}
+    </ImageItem>
+  );
+};

@@ -1,33 +1,40 @@
-import { Component } from 'react';
 import { BsSearch } from 'react-icons/bs';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Header, SearchForm, SearchButton, Input } from './Searchbar.styled';
 
-export class Searchbar extends Component {
-  handleSubmit = e => {
+export const Searchbar = ({ onSubmit }) => {
+  const handleSubmit = e => {
     e.preventDefault();
-    const query = e.target.elements.input.value;
-    this.props.onSubmit(query);
+    const queryValue = e.target.elements.input.value;
+    const query = queryValue.trim();
+    if (query === '') {
+      notify();
+    }
+    onSubmit(query);
   };
 
-  render() {
-    return (
-      <Header>
-        <SearchForm onSubmit={this.handleSubmit}>
-          <SearchButton type="submit">
-            <BsSearch size="2em" />
-          </SearchButton>
-
-          <Input
-            name="input"
-            type="text"
-            autocomplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-          />
-        </SearchForm>
-      </Header>
-    );
+  function notify() {
+    toast.warn('Please, enter a search term', {
+      position: toast.POSITION.TOP_RIGHT,
+    });
   }
-}
 
+  return (
+    <Header>
+      <SearchForm onSubmit={handleSubmit}>
+        <SearchButton type="submit">
+          <BsSearch size="2em" />
+        </SearchButton>
 
+        <Input
+          name="input"
+          type="text"
+          autocomplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+        />
+      </SearchForm>
+    </Header>
+  );
+};
